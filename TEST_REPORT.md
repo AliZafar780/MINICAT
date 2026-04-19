@@ -112,7 +112,7 @@ All fuzzing tests passed - MINICAT is resistant to:
 
 | Metric | Value |
 |:-------|------:|
-| Binary Size | 32 KB |
+| Binary Size | 27KB |
 | Startup Time | ~15ms |
 | Memory Usage | ~800KB RSS |
 | Max Connections | 10,000 |
@@ -124,7 +124,7 @@ All fuzzing tests passed - MINICAT is resistant to:
 
 | Feature | ncat | MINICAT |
 |:--------|-----:|--------:|
-| Size | 945 KB | 32 KB |
+| Size | 945 KB | 27KB |
 | Dependencies | 6 | 0 (standalone) |
 | HTTP Server | ❌ | ✅ |
 | epoll | ❌ | ✅ |
