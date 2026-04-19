@@ -40,7 +40,7 @@ Originally created through reverse engineering ncat using Ghidra, MINICAT delive
 | Tool | Size | Dependencies | Max Connections |
 |------|------|---------------|-----------------|
 | ncat (nmap) | 945 KB | 6 libraries | ~1,000 |
-| **MINICAT** | **22 KB** | **ZERO** | **10,000+** |
+| **MINICAT** | **32 KB** | **ZERO** | **10,000+** |
 
 **Result: 29x smaller, 10x more connections, Zero dependencies!**
 
@@ -175,7 +175,7 @@ minicat [OPTIONS] [HOST] PORT
 
 | Metric | ncat | MINICAT | Improvement |
 |--------|------|---------|-------------|
-| Binary Size | 945 KB | 22 KB | **29x smaller** |
+| Binary Size | 945 KB | 32 KB | **29x smaller** |
 | Startup Time | 50 ms | 5 ms | **10x faster** |
 | Memory Usage | 8 MB | 128 KB | **62x less** |
 | Max Connections | 1,000 | 10,000+ | **10x more** |
