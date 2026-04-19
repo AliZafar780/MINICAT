@@ -1,7 +1,7 @@
 /* 
  * MINICAT v1.0 - Built by Ali Zafar
  * Enhanced Network Tool with TLS, WebSocket, Proxy, Encryption Support
- * Size: ~32KB (with OpenSSL ~250KB due to SSL library)
+ * Size: ~27KB (with OpenSSL ~250KB due to SSL library)
  */
 
 #define _GNU_SOURCE

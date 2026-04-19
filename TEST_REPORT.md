@@ -2,7 +2,7 @@
 
 **Date:** April 20, 2026  
 **Author:** Ali Zafar  
-**Binary:** minicat (32KB, with OpenSSL ~250KB)
+**Binary:** minicat (27KB, zero dependencies)
 
 ---
 
@@ -39,7 +39,7 @@
 1. **Basic Tests**
    - ✅ Binary exists
    - ✅ Binary is executable  
-   - ✅ Binary size ~32KB
+   - ✅ Binary size ~27KB
    - ✅ Help display (properly formatted)
    - ✅ Version display
 
