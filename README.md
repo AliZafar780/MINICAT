@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-1.0-green?style=flat&logo=version" alt="Version">
-  <img src="https://img.shields.io/badge/size-22KB-blue?style=flat&logo=size" alt="Size">
+  <img src="https://img.shields.io/badge/size-32KB-blue?style=flat&logo=size" alt="Size">
   <img src="https://img.shields.io/badge/C-00599C?style=flat&logo=c" alt="Language">
   <img src="https://img.shields.io/badge/platform-Linux%20%7C%20x86--64-purple?style=flat&logo=platform" alt="Platform">
   <img src="https://img.shields.io/badge/license-MIT-orange?style=flat&logo=license" alt="License">
@@ -20,7 +20,7 @@
   <a href="https://github.com/AliZafar780/MINICAT/blob/main/LICENSE.md">
     <img src="https://img.shields.io/badge/license-MIT-yellowgreen?style=flat" alt="License: MIT">
   </a>
-  <a href="https://twitter.com/intent/tweet?text=Check+out+MINICAT+-+A+22KB+network+tool+42x+smaller+than+ncat&url=https%3A%2F%2Fgithub.com%2FAliZafar780%2FMINICAT">
+  <a href="https://twitter.com/intent/tweet?text=Check+out+MINICAT+-+A+32KB+network+tool+29x+smaller+than+ncat&url=https%3A%2F%2Fgithub.com%2FAliZafar780%2FMINICAT">
     <img src="https://img.shields.io/badge/Tweet-blue?style=flat&logo=twitter" alt="Tweet">
   </a>
 </p>
@@ -29,7 +29,7 @@
 
 ## ⚡ What is MINICAT?
 
-**MINICAT** is a powerful, lightweight network tool built as a replacement for ncat (from nmap). At only **22KB**, it's **42x smaller** than ncat (945KB) while offering **MORE features**!
+**MINICAT** is a powerful, lightweight network tool built as a replacement for ncat (from nmap). At only **32KB**, it's **29x smaller** than ncat (945KB) while offering **MORE features**!
 
 Originally created through reverse engineering ncat using Ghidra, MINICAT delivers enterprise-grade networking capabilities with zero dependencies.
 
@@ -42,7 +42,7 @@ Originally created through reverse engineering ncat using Ghidra, MINICAT delive
 | ncat (nmap) | 945 KB | 6 libraries | ~1,000 |
 | **MINICAT** | **22 KB** | **ZERO** | **10,000+** |
 
-**Result: 42x smaller, 10x more connections, Zero dependencies!**
+**Result: 29x smaller, 10x more connections, Zero dependencies!**
 
 ---
 
@@ -151,7 +151,7 @@ minicat [OPTIONS] [HOST] PORT
 
 | Feature | Benefit |
 |---------|---------|
-| **22KB Size** | Fits on any device, ~100MB saved per Docker |
+| **32KB Size** | Fits on any device, ~100MB saved per Docker |
 | **Zero Dependencies** | No CVE vulnerabilities from libraries |
 | **epoll() Support** | 10,000+ concurrent connections |
 | **Built-in HTTP** | No need for nginx/Apache |
@@ -166,7 +166,7 @@ minicat [OPTIONS] [HOST] PORT
 - 📡 **IoT Devices** - Works on 512KB storage
 - 🎖️ **Tactical Operations** - USB drive portable
 - 🖥️ **Embedded Systems** - Minimal resource usage
-- 🚀 **Quick HTTP Servers** - 22KB vs nginx's 2MB+
+- 🚀 **Quick HTTP Servers** - 32KB vs nginx's 2MB+
 - 🔒 **Security Research** - Learning network programming
 
 ---
@@ -175,7 +175,7 @@ minicat [OPTIONS] [HOST] PORT
 
 | Metric | ncat | MINICAT | Improvement |
 |--------|------|---------|-------------|
-| Binary Size | 945 KB | 22 KB | **42x smaller** |
+| Binary Size | 945 KB | 22 KB | **29x smaller** |
 | Startup Time | 50 ms | 5 ms | **10x faster** |
 | Memory Usage | 8 MB | 128 KB | **62x less** |
 | Max Connections | 1,000 | 10,000+ | **10x more** |
@@ -307,13 +307,13 @@ Contributions welcome! Please feel free to submit issues or pull requests.
 
 **Built by Ali Zafar v1.0** 🎯
 
-*42x smaller, 10x more powerful*
+*29x smaller, 10x more powerful*
 
 </p>
 
 ---
 
-<a href="https://twitter.com/intent/tweet?text=Check+out+MINICAT+-+A+22KB+network+tool+42x+smaller+than+ncat&url=https%3A%2F%2Fgithub.com%2FAliZafar780%2FMINICAT">
+<a href="https://twitter.com/intent/tweet?text=Check+out+MINICAT+-+A+32KB+network+tool+29x+smaller+than+ncat&url=https%3A%2F%2Fgithub.com%2FAliZafar780%2FMINICAT">
 <img src="https://img.shields.io/badge/Tweet-this-blue?style=for-the-badge&logo=twitter" alt="Tweet">
 </a>
 
