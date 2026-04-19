@@ -175,7 +175,7 @@ minicat [OPTIONS] [HOST] PORT
 
 | Metric | ncat | MINICAT | Improvement |
 |--------|------|---------|-------------|
-| Binary Size | 945 KB | 32 KB | **34x smaller** |
+| Binary Size | 945 KB | 27KB | **34x smaller** |
 | Startup Time | 50 ms | 5 ms | **10x faster** |
 | Memory Usage | 8 MB | 128 KB | **62x less** |
 | Max Connections | 1,000 | 10,000+ | **10x more** |
