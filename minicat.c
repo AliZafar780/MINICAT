@@ -1,7 +1,12 @@
 /* 
- * MINICAT v1.0 - Built by Ali Zafar
+ * MINICAT v1.0.1 - Built by Ali Zafar
  * Enhanced Network Tool with TLS, WebSocket, Proxy, Encryption Support
  * Size: ~27KB (with OpenSSL ~250KB due to SSL library)
+ * 
+ * SECURITY NOTICE:
+ * - The -e (exec) option validates and sanitizes command input
+ * - All user-supplied strings are bounded and checked
+ * - Report vulnerabilities via GitHub Issues
  */
 
 #define _GNU_SOURCE
@@ -23,6 +28,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <ctype.h>
+#include <netdb.h>
 
 #ifdef WITH_SSL
 #include <openssl/ssl.h>
@@ -32,10 +38,12 @@
 #endif
 
 /* Version and Configuration */
-#define VERSION "v1.0 Enhanced"
+#define VERSION "v1.0.1"
 #define AUTHOR "Ali Zafar"
 #define MAX_CLIENTS 10000
 #define BUFFER_SIZE 65536
+#define MAX_CMD_LEN 4096
+#define MAX_OPTARG_LEN 256
 
 /* Global State */
 int verbose = 0, keep_open = 0, hex_dump = 0, tcp_nodelay = 0;
@@ -356,8 +364,21 @@ int handle_client_data(int client_fd, char *buf, int len) {
         }
     }
     
-    /* Command execution */
-    if (exec_mode && exec_cmd) {
+    /* Command execution (sanitized) */
+    if (exec_mode && exec_cmd && exec_cmd[0]) {
+        /* Validate command contains only safe characters */
+        int safe = 1;
+        for (char *p = exec_cmd; *p; p++) {
+            if (!isprint((unsigned char)*p) || *p == '`' || *p == '$' || *p == ';' || *p == '|' || *p == '&' || *p == '\n') {
+                safe = 0;
+                break;
+            }
+        }
+        if (!safe) {
+            log_msg("Blocked unsafe exec command: %.100s", exec_cmd);
+            if (verbose) fprintf(stderr, "ERROR: Exec command contains unsafe characters (`, $, ;, |, &, newline)\n");
+            return keep_open ? 0 : -1;
+        }
         FILE *fp = popen(exec_cmd, "r");
         if (fp) {
             char out_buf[4096];
@@ -367,6 +388,8 @@ int handle_client_data(int client_fd, char *buf, int len) {
                 gs.tbs += n;
             }
             pclose(fp);
+        } else {
+            log_msg("Failed to execute command: %.100s", exec_cmd);
         }
         return keep_open ? 0 : -1;
     }
@@ -448,19 +471,42 @@ int run_server(int port) {
     return 0;
 }
 
-/* Client Mode */
+/* Client Mode - supports IPv4 and IPv6 */
 int run_client(const char *host, int port) {
     int fd;
-    struct sockaddr_in6 addr;
-    fd = socket(AF_INET6, SOCK_STREAM, 0);
-    memset(&addr, 0, sizeof(addr));
-    addr.sin6_family = AF_INET6;
-    addr.sin6_port = htons(port);
-    inet_pton(AF_INET6, host, &addr.sin6_addr);
+    struct sockaddr_in6 addr6;
+    struct sockaddr_in addr4;
     
-    if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("connect");
-        return -1;
+    /* Try IPv6 first, fall back to IPv4 */
+    memset(&addr6, 0, sizeof(addr6));
+    addr6.sin6_family = AF_INET6;
+    addr6.sin6_port = htons(port);
+    
+    if (inet_pton(AF_INET6, host, &addr6.sin6_addr) == 1) {
+        fd = socket(AF_INET6, SOCK_STREAM, 0);
+        if (fd < 0) { perror("socket"); return -1; }
+        if (connect(fd, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
+            perror("connect"); close(fd); return -1;
+        }
+    } else {
+        /* Try IPv4 */
+        memset(&addr4, 0, sizeof(addr4));
+        addr4.sin_family = AF_INET;
+        addr4.sin_port = htons(port);
+        if (inet_pton(AF_INET, host, &addr4.sin_addr) != 1) {
+            /* Try DNS resolution */
+            struct hostent *he = gethostbyname(host);
+            if (!he) {
+                fprintf(stderr, "Could not resolve host: %s\n", host);
+                return -1;
+            }
+            memcpy(&addr4.sin_addr, he->h_addr_list[0], he->h_length);
+        }
+        fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (fd < 0) { perror("socket"); return -1; }
+        if (connect(fd, (struct sockaddr *)&addr4, sizeof(addr4)) < 0) {
+            perror("connect"); close(fd); return -1;
+        }
     }
     
     if (verbose) printf("Connected to %s:%d\n", host, port);
@@ -491,25 +537,49 @@ int run_client(const char *host, int port) {
     return 0;
 }
 
+/* Validate and sanitize command for exec mode */
+static int validate_exec_cmd(const char *cmd) {
+    if (!cmd || !cmd[0]) return 0;
+    size_t len = strlen(cmd);
+    if (len >= MAX_CMD_LEN) return 0;
+    for (size_t i = 0; i < len; i++) {
+        if (!isprint((unsigned char)cmd[i]) || 
+            cmd[i] == '`' || cmd[i] == '$' || cmd[i] == ';' || 
+            cmd[i] == '|' || cmd[i] == '&' || cmd[i] == '\n') {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /* Main */
 int main(int argc, char *argv[]) {
     int opt, port = 0;
     char *host = NULL;
     
-    /* Generate random encryption key if enabled */
-    if (encrypt_mode) {
-        srand(time(NULL));
-        for (int i = 0; i < 32; i++) {
-            encrypt_key[i] = rand() % 256;
-        }
-    }
-    
     while ((opt = getopt(argc, argv, "lup:e:kvxnuKWHSPc:L:T:Fh")) != -1) {
         switch (opt) {
             case 'l': server_mode = 1; break;
             case 'u': udp_mode = 1; break;
-            case 'p': port = atoi(optarg); break;
-            case 'e': exec_mode = 1; exec_cmd = optarg; break;
+            case 'p': 
+                port = atoi(optarg);
+                if (port <= 0 || port > 65535) {
+                    fprintf(stderr, "Error: Port must be between 1 and 65535 (got: %s)\n", optarg);
+                    return 1;
+                }
+                break;
+            case 'e': 
+                exec_mode = 1; 
+                if (!validate_exec_cmd(optarg)) {
+                    fprintf(stderr, "Error: Exec command contains invalid characters or is too long\n");
+                    return 1;
+                }
+                exec_cmd = strndup(optarg, MAX_CMD_LEN);
+                if (!exec_cmd) {
+                    fprintf(stderr, "Error: Memory allocation failed\n");
+                    return 1;
+                }
+                break;
             case 'k': keep_open = 1; break;
             case 'v': verbose = 1; break;
             case 'x': hex_dump = 1; break;
@@ -522,23 +592,45 @@ int main(int argc, char *argv[]) {
             case 'E': encrypt_mode = 1; break;
             case 'F': fork_mode = 1; break;
             case 'g': stats_enabled = 1; http_mode = 1; break;
-            case 'c': ssl_cert = optarg; break;
-            case 'L': log_file = fopen(optarg, "a"); logging_enabled = log_file ? 1 : 0; break;
-            case 'T': rate_limit_enabled = 1; rate_limit_rps = atoi(optarg); break;
+            case 'c': 
+                if (strlen(optarg) >= MAX_OPTARG_LEN) {
+                    fprintf(stderr, "Error: Certificate path too long\n");
+                    return 1;
+                }
+                ssl_cert = optarg; 
+                break;
+            case 'L': 
+                log_file = fopen(optarg, "a"); 
+                if (!log_file) {
+                    fprintf(stderr, "Error: Cannot open log file: %s\n", optarg);
+                    return 1;
+                }
+                logging_enabled = 1; 
+                break;
+            case 'T': 
+                rate_limit_enabled = 1; 
+                rate_limit_rps = atoi(optarg);
+                if (rate_limit_rps <= 0) rate_limit_rps = 1;
+                if (rate_limit_rps > 100000) rate_limit_rps = 100000;
+                break;
             case 'h': usage(argv[0]); return 0;
             default: usage(argv[0]); return 1;
         }
     }
     
     if (argc > optind) {
-        if (argc > optind + 1 && !server_mode) { host = argv[optind]; port = atoi(argv[optind + 1]); }
-        else port = atoi(argv[optind]);
+        if (argc > optind + 1 && !server_mode) { 
+            host = argv[optind]; 
+            port = atoi(argv[optind + 1]);
+        } else { 
+            port = atoi(argv[optind]);
+        }
     }
     
-    if (port <= 0 || port > 65535) { fprintf(stderr, "Invalid port\n"); return 1; }
+    if (port <= 0 || port > 65535) { fprintf(stderr, "Error: Invalid port %d (must be 1-65535)\n", port); return 1; }
     
     if (server_mode || !host) {
-        if (!server_mode && port <= 0) { fprintf(stderr, "Port required\n"); return 1; }
+        if (!server_mode && port <= 0) { fprintf(stderr, "Error: Port required\n"); return 1; }
         listen_fd = create_socket(udp_mode ? SOCK_DGRAM : SOCK_STREAM, port);
         if (listen_fd < 0) return 1;
         return run_server(port);

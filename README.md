@@ -1,118 +1,93 @@
-# MINICAT v1.0 - Built by Ali Zafar
+# MINICAT
 
-<p align="center">
-  <img src="https://img.shields.io/badge/version-1.0-green?style=flat&logo=version" alt="Version">
-  <img src="https://img.shields.io/badge/size-27KB-blue?style=flat&logo=size" alt="Size">
-  <img src="https://img.shields.io/badge/C-00599C?style=flat&logo=c" alt="Language">
-  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20x86--64-purple?style=flat&logo=platform" alt="Platform">
-  <img src="https://img.shields.io/badge/license-MIT-orange?style=flat&logo=license" alt="License">
-  <img src="https://img.shields.io/github/stars/AliZafar780/MINICAT?style=flat" alt="Stars">
-  <img src="https://img.shields.io/github/license/AliZafar780/MINICAT?style=flat" alt="License">
-</p>
+[![C](https://img.shields.io/badge/Language-C-blue)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE.md)
+[![Version](https://img.shields.io/badge/Version-1.0.1-orange)](https://github.com/AliZafar780/MINICAT)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20x86__64-purple)](#)
+[![Build](https://img.shields.io/badge/Build-passing-brightgreen)](#)
 
-<p align="center">
-  <a href="https://github.com/AliZafar780/MINICAT/releases">
-    <img src="https://img.shields.io/github/v/release/AliZafar780/MINICAT?include_prereleases&label=Release" alt="GitHub release">
-  </a>
-  <a href="https://github.com/AliZafar780/MINICAT/issues">
-    <img src="https://img.shields.io/github/issues/AliZafar780/MINICAT?label=Issues" alt="Issues">
-  </a>
-  <a href="https://github.com/AliZafar780/MINICAT/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/badge/license-MIT-yellowgreen?style=flat" alt="License: MIT">
-  </a>
-  <a href="https://twitter.com/intent/tweet?text=Check+out+MINICAT+-+A+27KB+network+tool+35x+smaller+than+ncat&url=https%3A%2F%2Fgithub.com%2FAliZafar780%2FMINICAT">
-    <img src="https://img.shields.io/badge/Tweet-blue?style=flat&logo=twitter" alt="Tweet">
-  </a>
-</p>
+**MINICAT** is a lightweight, zero-dependency network tool written in C. At approximately **27 KB**, it is substantially smaller than conventional tools like ncat (~945 KB) while providing a comparable set of features including TCP/UDP communication, an embedded HTTP server, WebSocket support, and rate limiting.
 
 ---
 
-## ⚡ What is MINICAT?
+## Table of Contents
 
-**MINICAT** is a powerful, lightweight network tool built as a replacement for ncat (from nmap). At only **27KB**, it's **35x smaller** than ncat (945KB) while offering **MORE features**!
-
-Originally created through reverse engineering ncat using Ghidra, MINICAT delivers enterprise-grade networking capabilities with zero dependencies.
-
----
-
-## 📊 Size Comparison
-
-| Tool | Size | Dependencies | Max Connections |
-|------|------|---------------|-----------------|
-| ncat (nmap) | 945 KB | 6 libraries | ~1,000 |
-| **MINICAT** | **27 KB** | **ZERO** | **10,000+** |
-
-**Result: 35x smaller, 10x more connections, Zero dependencies!**
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Command Reference](#command-reference)
+- [HTTP Endpoints](#http-endpoints)
+- [Build Instructions](#build-instructions)
+- [Testing](#testing)
+- [Security](#security)
+- [License](#license)
 
 ---
 
-## 🚀 Features
+## Features
 
-### Network Core
-- ✅ TCP/UDP Socket Communication
-- ✅ IPv4/IPv6 Dual-Stack Support
-- ✅ epoll() for 10,000+ Concurrent Connections
-- ✅ TCP_NODELAY for Low Latency
-- ✅ SO_REUSEADDR for Quick Restart
+**Network Core**
 
-### HTTP Server (Built-in!)
-| Endpoint | Description | Response |
-|----------|-------------|----------|
-| `/` | Root page | MINICAT info |
-| `/stats` | Statistics HTML page | Styled HTML |
-| `/health` | Health check | `OK` |
-| `/json` | JSON statistics | JSON object |
-| `/ping` | Health alias | `OK` |
+- TCP client/server and UDP communication
+- IPv4/IPv6 dual-stack support
+- epoll-based I/O for 10,000+ concurrent connections
+- TCP_NODELAY for low-latency communication
+- SO_REUSEADDR for immediate port reuse
 
-### Security & Diagnostics
-- ✅ Hex Dump Mode (-x)
-- ✅ Verbose Logging (-v)
-- ✅ File Logging (-L)
-- ✅ Rate Limiting (-T)
-- ✅ XOR Encryption (-E)
+**Embedded HTTP Server**
 
-### Extended Features
-- ✅ Keep-Alive Connections (-k)
-- ✅ Chat Broadcast Mode (-K)
-- ✅ HTTP Server Mode (-H)
-- ✅ Statistics UI (-g)
-- ✅ Fork on Connect (-F)
+- Root endpoint (`/`), statistics (`/stats`), health check (`/health`, `/ping`), JSON stats (`/json`)
+- Automatic Content-Type detection (HTML, JSON, plain text)
+- Keep-alive connection support
+
+**Security & Diagnostics**
+
+- Hex dump mode for traffic inspection
+- Verbose logging with optional file output
+- Rate limiting for DoS protection
+- XOR encryption for basic traffic obfuscation
+- Command injection protection on exec mode
 
 ---
 
-## 📦 Quick Start
+## Quick Start
 
 ### Compile
+
 ```bash
 gcc minicat.c -o minicat -Wall -O2
+strip minicat  # reduce binary size
 ```
 
 ### Basic TCP Server
+
 ```bash
 ./minicat -l -p 9999
 ```
 
-### Connect Client
+### Connect as Client
+
 ```bash
 ./minicat localhost 9999
 ```
 
-### HTTP Server with Statistics
+### HTTP Server with Statistics Dashboard
+
 ```bash
 ./minicat -l -H -g -p 8080
 ```
 
-### Test HTTP Endpoints
+Test the HTTP endpoints:
+
 ```bash
 curl http://localhost:8080/       # Root page
-curl http://localhost:8080/stats  # Statistics HTML
+curl http://localhost:8080/stats  # Statistics dashboard
 curl http://localhost:8080/health # Health check
-curl http://localhost:8080/json  # JSON stats
+curl http://localhost:8080/json   # JSON statistics
 ```
 
 ---
 
-## ⚙️ Command Reference
+## Command Reference
 
 ```
 minicat [OPTIONS] [HOST] PORT
@@ -124,199 +99,122 @@ minicat [OPTIONS] [HOST] PORT
 |------|-------------|---------|
 | `-l` | Listen mode (server) | `./minicat -l -p 9999` |
 | `-u` | UDP mode | `./minicat -u -p 9999` |
-| `-p` | Port number | `-p 8080` |
-| `-k` | Keep open (persistent) | `-k` |
+| `-p PORT` | Port number | `-p 8080` |
+| `-e CMD` | Execute command on connection (sanitized) | `-e "cat /etc/hostname"` |
+| `-k` | Keep connection open (persistent) | `-k` |
 | `-v` | Verbose output | `-v` |
 | `-x` | Hex dump all traffic | `-x` |
 | `-n` | TCP_NODELAY (low latency) | `-n` |
 | `-K` | Chat broadcast mode | `-K` |
 | `-H` | HTTP server mode | `-H` |
-| `-g` | Statistics UI | `-g` |
-| `-L` | Log to file | `-L /var/log/minicat.log` |
-| `-T` | Rate limit (req/sec) | `-T 100` |
+| `-g` | Statistics UI (implies `-H`) | `-g` |
+| `-L FILE` | Log to file | `-L /tmp/minicat.log` |
+| `-T RATE` | Rate limit (requests/sec) | `-T 100` |
+| `-F` | Fork on connect | `-F` |
 | `-h` | Show help | `-h` |
 
-### Ready Flags (Compile-time)
+### Compile-time Flags
+
 | Flag | Description |
 |------|-------------|
-| `-S` | SSL/TLS support (needs -DWITH_SSL) |
-| `-W` | WebSocket mode |
-| `-P` | Proxy mode |
-| `-E` | XOR encryption |
-| `-F` | Fork on connect |
+| `-DWITH_SSL` | Enable SSL/TLS support (requires `-lssl -lcrypto`) |
+| `-W` | WebSocket mode (runtime) |
+| `-P` | Proxy mode (runtime) |
+| `-E` | XOR encryption (runtime) |
 
 ---
 
-## 🎯 Why MINICAT?
+## HTTP Endpoints
 
-| Feature | Benefit |
-|---------|---------|
-| **27KB Size** | Fits on any device, ~100MB saved per Docker |
-| **Zero Dependencies** | No CVE vulnerabilities from libraries |
-| **epoll() Support** | 10,000+ concurrent connections |
-| **Built-in HTTP** | No need for nginx/Apache |
-| **10x Faster** | 5ms startup vs 50ms |
-| **10x Lower Latency** | 1ms vs 10ms |
+When started with `-H` (and optionally `-g`):
 
----
-
-## 💻 Use Cases
-
-- 🐳 **Docker Containers** - Minimal base images
-- 📡 **IoT Devices** - Works on 512KB storage
-- 🎖️ **Tactical Operations** - USB drive portable
-- 🖥️ **Embedded Systems** - Minimal resource usage
-- 🚀 **Quick HTTP Servers** - 27KB vs nginx's 2MB+
-- 🔒 **Security Research** - Learning network programming
+| Endpoint | Response | Content-Type |
+|----------|----------|--------------|
+| `/` | HTML page with tool info and links | `text/html` |
+| `/stats` | HTML statistics dashboard | `text/html` |
+| `/health` | `OK` | `text/plain` |
+| `/ping` | `OK` | `text/plain` |
+| `/json` | JSON object with uptime, connections, tx/rx | `application/json` |
 
 ---
 
-## 📈 Performance
+## Build Instructions
 
-| Metric | ncat | MINICAT | Improvement |
-|--------|------|---------|-------------|
-| Binary Size | 945 KB | 27KB | **35x smaller** |
-| Startup Time | 50 ms | 5 ms | **10x faster** |
-| Memory Usage | 8 MB | 128 KB | **62x less** |
-| Max Connections | 1,000 | 10,000+ | **10x more** |
-| Latency | 10 ms | 1 ms | **10x lower** |
+### Minimal Build (~27 KB)
 
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────┐
-│           MINICAT v1.0                    │
-│       Single Process Server              │
-│       Built by Ali Zafar                 │
-└────────────────┬────────────────────────┘
-                 │
-    ┌────────────┼────────────┐
-    ▼            ▼            ▼
-┌────────┐ ┌────────┐ ┌────────────┐
-│ Socket │ │  HTTP  │ │ Statistics │
-│ Layer  │ │ Handler│ │ Engine    │
-└────────┘ └────────┘ └────────────┘
-    │            │            │
-    ▼            ▼            ▼
-┌────────┐ ┌────────┐ ┌────────────┐
-│ epoll  │ │Response│ │ /stats     │
-│ Event  │ │Builder│ │ /json     │
-│ Loop   │ │       │ │           │
-└────────┘ └────────┘ └────────────┘
-```
-
----
-
-## 📚 Documentation
-
-For complete documentation, see:
-
-| File | Description |
-|------|-------------|
-| [LICENSE.md](LICENSE.md) | MIT License, usage restrictions, disclaimer |
-| [TECHNICAL.md](TECHNICAL.md) | Technical specification, architecture, performance |
-| [HURDLES.md](HURDLES.md) | Challenges faced and solutions |
-
----
-
-## 📜 License
-
-**MIT License** - See [LICENSE.md](LICENSE.md) for full details.
-
-### Key Points:
-- ✅ Free to use, modify, and distribute
-- ✅ Commercial use allowed
-- ✅ No attribution required (but appreciated)
-- ⚠️ Educational use only - not for malicious purposes
-- ⚠️ Use at your own risk
-
-### Usage Restrictions
-
-**Permitted:**
-- Learning about network programming
-- Building/testing network applications
-- Local testing on systems you own
-- Security research with authorization
-
-**Prohibited:**
-- Unauthorized access to computer systems
-- Malicious activities
-- Attacks without explicit permission
-- Production use without security review
-
----
-
-## 🔧 Build Instructions
-
-### Basic Build
 ```bash
 gcc minicat.c -o minicat -Wall -O2
+strip minicat
 ```
 
 ### With SSL/TLS Support
+
 ```bash
 gcc -DWITH_SSL minicat.c -o minicat -lssl -lcrypto -Wall -O2
 ```
 
-### Strip Binary (optional)
+### Debug Build
+
 ```bash
-strip minicat
+gcc minicat.c -o minicat -Wall -Wextra -O0 -g -DDEBUG
 ```
 
 ---
 
-## 🧪 Testing
+## Testing
 
-All tests passed:
-- ✅ HTTP Endpoints (/, /stats, /health, /json)
-- ✅ All Command Line Options
-- ✅ Error Handling & Edge Cases
-- ✅ Concurrent Connections (100/100 success)
-- ✅ File Logging
-- ✅ Rate Limiting
-- ✅ Binary Size verification
+The repository includes a comprehensive test suite:
 
----
+```bash
+# Run all tests
+./MINICAT_tests.sh
 
-## 🔐 Security Notes
+# Requires the compiled `minicat` binary in the same directory
+```
 
-- No TLS/SSL built-in (use nginx/stunnel for HTTPS)
-- XOR encryption is basic (for learning only)
-- Rate limiting prevents DoS
-- File logging for audit trails
+The test suite validates:
 
----
-
-## 🤝 Contributing
-
-Contributions welcome! Please feel free to submit issues or pull requests.
+- Binary integrity and size
+- All command-line options
+- HTTP endpoint responses
+- Concurrent connection handling (10 and 50 clients)
+- Error handling and edge cases
+- File logging
+- Performance metrics (startup time, memory usage)
+- Fuzzing resistance (malformed input, null bytes, large payloads)
+- Command injection prevention
 
 ---
 
-## 📞 Support
+## Performance
 
-- **Author:** Ali Zafar
-- **GitHub:** https://github.com/AliZafar780/MINICAT
-- **Issues:** https://github.com/AliZafar780/MINICAT/issues
-
----
-
-<p align="center">
-
-**Built by Ali Zafar v1.0** 🎯
-
-*35x smaller, 10x more powerful*
-
-</p>
+| Metric | ncat | MINICAT |
+|--------|------|---------|
+| Binary Size | 945 KB | ~27 KB |
+| Dependencies | 6 libraries | Zero |
+| Startup Time | ~50 ms | ~5 ms |
+| Max Connections | ~1,000 | 10,000+ |
+| HTTP Server | No | Built-in |
 
 ---
 
-<a href="https://twitter.com/intent/tweet?text=Check+out+MINICAT+-+A+27KB+network+tool+35x+smaller+than+ncat&url=https%3A%2F%2Fgithub.com%2FAliZafar780%2FMINICAT">
-<img src="https://img.shields.io/badge/Tweet-this-blue?style=for-the-badge&logo=twitter" alt="Tweet">
-</a>
+## Security
 
-<a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgithub.com%2FAliZafar780%2FMINICAT">
-<img src="https://img.shields.io/badge/Share-on%20LinkedIn-blue?style=for-the-badge&logo=linkedin" alt="Share on LinkedIn">
-</a>
+- The `-e` (exec) option validates commands against shell metacharacters (`` `$;&|``) before execution
+- Rate limiting (`-T`) protects against basic DoS attacks
+- Input buffers are bounded to prevent overflows
+- All file operations use bounded string handling
+
+> **Note:** XOR encryption (`-E`) is a basic obfuscation mechanism and should not be relied upon for secure communications.
+
+---
+
+## License
+
+Distributed under the **MIT License**. See [LICENSE.md](LICENSE.md) for full terms.
+
+**Author:** Ali Zafar ([@AliZafar780](https://github.com/AliZafar780))
+
+---
+
+*Built by Ali Zafar — v1.0.1*

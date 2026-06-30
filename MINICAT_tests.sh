@@ -9,9 +9,11 @@
 # Enterprise: Performance, Load, Security
 #
 
-VERSION="1.0"
+VERSION="1.0.1"
 DATE=$(date +"%Y-%m-%d %H:%M:%S")
-BINARY="/home/aliz/Desktop/minicat"
+# Detect binary path relative to this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BINARY="${SCRIPT_DIR}/minicat"
 PASS=0
 FAIL=0
 SKIP=0
@@ -25,7 +27,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Logging
-LOG_FILE="/home/aliz/Desktop/MINICAT_test_log.txt"
+LOG_FILE="${SCRIPT_DIR}/MINICAT_test_log.txt"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 print_header() {
