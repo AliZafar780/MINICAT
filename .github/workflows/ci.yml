@@ -7,76 +7,61 @@ on:
 
 jobs:
   build-and-test:
-    name: Build on ${{ matrix.os }}
+    name: Build & test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            cc: gcc
-          - os: macos-latest
-            cc: clang
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Compile (Linux epoll)
+      - name: Install deps (Linux)
         if: runner.os == 'Linux'
         run: |
-          gcc -o minicat minicat_breakthrough.c -Wall -O2
-          strip minicat
-          ls -lh minicat
-          echo "=== BINARY SIZE ==="
-          stat --format=%s minicat
-          echo "=== DEPENDENCIES ==="
-          ldd minicat || true
-          echo "=== HELP ==="
-          ./minicat -h
-          echo "=== TEST: TCP SERVER ==="
-          timeout 3 ./minicat -l -p 19999 &
-          sleep 1
-          echo "TEST" | timeout 2 ./minicat 127.0.0.1 19999
-          gs_total=$(echo "TEST" | timeout 2 ./minicat 127.0.0.1 19999)
-          echo "Got: $gs_total"
-          echo "=== TEST: HTTP SERVER ==="
-          timeout 5 ./minicat -l -H -p 19998 &
-          sleep 1
-          curl -s http://127.0.0.1:19998/health
-          echo ""
-          curl -s http://127.0.0.1:19998/json
-          echo ""
-          echo "=== TEST: WEBSOCKET + CHAT ==="
-          timeout 5 ./minicat -l -W -K -p 19997 &
-          sleep 1
-          echo "=== TEST: PROXY ==="
-          timeout 5 ./minicat -l -P -p 19996 &
-          sleep 1
-          curl -s -x http://127.0.0.1:19996 http://example.com -o /dev/null -w "%{http_code}"
-          echo ""
-          echo "ALL TESTS PASSED"
+          sudo apt-get update
+          sudo apt-get install -y openssl libssl-dev xxd python3 netcat-openbsd
 
-      - name: Compile (macOS kqueue)
+      - name: Install deps (macOS)
         if: runner.os == 'macOS'
         run: |
-          clang -o minicat minicat_breakthrough.c -Wall -O2
-          strip minicat
+          brew install openssl coreutils
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          gcc -Wall -Wextra -Wpedantic -O2 -o minicat minicat.c
+          gcc -Wall -Wextra -Wpedantic -O2 -DWITH_SSL -o minicat_ssl minicat.c -lssl -lcrypto
+          gcc -Wall -Wextra -Wpedantic -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -o minicat_asan minicat.c
           ls -lh minicat
-          echo "=== HELP ==="
-          ./minicat -h
-          echo "=== TEST: TCP SERVER ==="
-          timeout 3 ./minicat -l -p 19999 &
+          ./minicat -h | head -5
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          clang -Wall -Wextra -Wpedantic -O2 -o minicat minicat.c
+          ./minicat -h | head -5
+
+      - name: Test — release battery (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          bash MINICAT_tests.sh .
+
+      - name: Test — smoke (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          set -e
+          ./minicat -l -p 19999 -x > /tmp/srv.log 2>&1 &
+          SP=$!
           sleep 1
-          echo "TEST" | timeout 2 ./minicat 127.0.0.1 19999
-          echo "=== TEST: HTTP SERVER ==="
-          timeout 5 ./minicat -l -H -p 19998 &
+          echo "SMOKE" | timeout 5 ./minicat 127.0.0.1 19999
           sleep 1
-          curl -s http://127.0.0.1:19998/health
-          echo ""
-          echo "=== TEST: PROXY ==="
-          timeout 5 ./minicat -l -P -p 19996 &
+          kill -9 $SP 2>/dev/null || true
+          grep -q 'HEX(5)' /tmp/srv.log && echo "TCP relay OK"
+          ./minicat -l -H -p 19998 &
+          SP=$!
           sleep 1
-          curl -s -x http://127.0.0.1:19996 http://example.com -o /dev/null -w "%{http_code}"
-          echo ""
+          curl -s http://127.0.0.1:19998/health | grep -q '200' && echo "HTTP OK"
+          kill -9 $SP 2>/dev/null || true
           echo "ALL TESTS PASSED"

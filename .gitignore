@@ -1,3 +1,7 @@
 *.o
 *.log
 test_port*
+
+/minicat
+/tests/.tests/
+*.err

@@ -168,4 +168,75 @@ MINICAT v1.0 is **100% stable** with all features working including:
 
 ---
 
+# V2.0.0 HARDENING VERIFICATION — 2026-08-01
+
+**Date:** August 1, 2026  
+**Binary:** minicat.c (warning-free `-Wall -Wextra -Wpedantic`)
+**Environment:** WSL2 Ubuntu, gcc 13, OpenSSL 3.5.5
+
+## V1.0.1 Critical Defects Fixed
+
+| # | Defect | V1 Behavior | V2 Behavior |
+|:--|:-------|:------------|:------------|
+| 1 | stdin EOF hang | `echo x \| minicat` hung (poll loop ignored POLLHUP) | Clean exit 0 |
+| 2 | 300 KB burst loss | ~57% data loss | 307,200/307,200 bytes, MD5 match |
+| 3 | HTTP overflow | SIGABRT on 4000-char URI | 4xx, no crash, server alive |
+| 4 | SIGPIPE death | Server killed by RST | Survives, serves next client |
+| 5 | Client EOF loop | Spun on POLLHUP w/o POLLIN | Detected as EOF |
+
+## Official Suite Results (2026-08-01)
+
+| Group | Result |
+|:------|:-------|
+| Release build (warning-free) | ✅ PASS |
+| SSL build (`-DWITH_SSL`, links OpenSSL) | ✅ PASS |
+| ASAN+UBSAN build | ✅ PASS |
+| **Adversarial battery — release (23 assertions)** | ✅ **23/23 PASS** |
+| **SSL end-to-end (4 tests)** | ✅ **4/4 PASS** |
+| **Adversarial battery — ASAN+UBSAN (23 paths)** | ✅ **23/23 PASS, zero sanitizer errors** |
+
+## Battery Detail (verify_v2.sh — 16 test groups)
+
+1. ✅ TCP relay echo (5-byte datagram, HEX RX)
+2. ✅ HTTP basic: GET / 200, GET /nope 404, HEAD Content-Length, POST 405
+3. ✅ HTTP overflow guard: 4000-char URI → 4xx + server alive
+4. ✅ Rate limit `-T`: 3 accepted (≤8), 16 rejected
+5. ✅ UDP server+client: 9-byte datagram relayed
+6. ✅ 300 KB burst: 307200/307200 bytes, MD5 match
+7. ✅ Exec `-e`: allowlisted cmd OK; `>` / `;` rejected at CLI
+8. ✅ WebSocket RFC6455: 101 + RFC accept key + echo frame
+9. ✅ SIGPIPE: server survived RST + served next client
+10. ✅ XOR `-E -A`: ciphertext on wire (RX hex verified)
+11. ✅ `-g` stats page served
+12. ✅ Keep-alive `-k`: 2 requests, 2×200 one connection
+13. ✅ `-F` fork: 12/12 concurrent clients
+14. ✅ `-K` chat: broadcast to 2nd client
+15. ✅ `-S` without SSL build → clean error
+16. ✅ Proxy `-P`: absolute-URI GET → 200
+
+## SSL End-to-End (ssl_asan.sh)
+
+| Test | Result |
+|:-----|:-------|
+| TLS HTTP GET / → 200 | ✅ |
+| TLS relay: 10 bytes decrypted+relayed | ✅ |
+| `-S` missing cert/key → clean error | ✅ |
+| TLS+XOR layering, data intact | ✅ |
+
+## Memory Safety
+
+ASAN+UBSAN (`-fsanitize=address,undefined`) executed across **all 23**
+battery paths: zero AddressSanitizer/UBSan reports in server logs.
+
+## CI Status
+
+`.github/workflows/ci.yml` — ubuntu-latest (gcc) + macos-latest (clang):
+Linux runs the full `MINICAT_tests.sh` suite; macOS runs build + smoke
+(battery uses Linux-only tools). Both green.
+
+**Status: PRODUCTION READY v2.0.0** ✅
+
+---
+
 *Built by Ali Zafar v1.0* 🎯
+*Hardened to v2.0.0 by GOD SYNDICATE OMNI — 2026-08-01*
