@@ -283,4 +283,131 @@ for the challenges.
 
 ---
 
+# V2.0.0 HARDENING PASS — NEW HURDLES OVERCOME
+
+## CHALLENGE 13: Client stdin EOF Hang (POLLHUP without POLLIN)
+
+### PROBLEM:
+`echo "hello" | ./minicat 127.0.0.1 9999` never exited (hung until timeout).
+Strace showed the client's poll loop spinning forever with `fd=0 revents=POLLHUP`.
+
+### DISCOVERY:
+When stdin is a closed pipe, `poll()` reports **POLLHUP without POLLIN**.
+The original client loop only checked `POLLIN`, so EOF was never noticed.
+
+### SOLUTION:
+Treat `POLLHUP | POLLERR` as EOF alongside `POLLIN` in the client stdin poll:
+
+```c
+if (pfd[1].revents & (POLLIN | POLLHUP | POLLERR))
+```
+
+**RESULT:** `printf 'hello' | timeout 5 ./minicat 127.0.0.1 18180` exits 0
+(previously 124). UDP conn-refused clients also exit 0.
+
+---
+
+## CHALLENGE 14: 300 KB Burst Data Loss (~57% in v1)
+
+### PROBLEM:
+A 300 KB burst sent in one go lost ~57% of data (only ~130 KB received).
+
+### DISCOVERY:
+Edge-triggered readiness semantics + partial reads without a loop
+caused dropped data when the socket buffer filled mid-burst.
+
+### SOLUTION:
+Loop `read()`/`write()` until `EAGAIN`/`EINTR` (level-triggered draining),
+and keep the full 64 KB buffer with bounded writes.
+
+**RESULT:** 307,200/307,200 bytes relayed, MD5 verified end-to-end.
+
+---
+
+## CHALLENGE 15: HTTP Overflow SIGABRT (4000-char URI crash)
+
+### PROBLEM:
+A 4000-char URI caused SIGABRT (heap corruption / overrun).
+
+### DISCOVERY:
+HTTP parse used an unbounded copy into a fixed buffer.
+
+### SOLUTION:
+Bounded URI parsing with explicit length checks; oversized URIs
+get a clean 4xx response and the server stays alive.
+
+**RESULT:** 4000-char URI → 4xx, no crash; server serves next request.
+
+---
+
+## CHALLENGE 16: SIGPIPE Process Death
+
+### PROBLEM:
+A client disconnecting with RST (curl abort) killed the server via SIGPIPE.
+
+### SOLUTION:
+`signal(SIGPIPE, SIG_IGN)` + explicit `EPIPE` handling in relay loops.
+
+**RESULT:** Server survives RST and serves the next client.
+
+---
+
+## CHALLENGE 17: ASan Runtime Order (LD_PRELOAD clash)
+
+### PROBLEM:
+`stdbuf` injects `libstdbuf.so` via LD_PRELOAD; combined with the
+ASAN build, libstdbuf loaded before libasan → 
+"ASan runtime does not come first" abort.
+
+### SOLUTION:
+- `NO_STDBUF=1` in test harness: no stdbuf on ASAN runs; server stdout
+  flushed by graceful TERM-then-KILL shutdown.
+- ASAN direct exec with **no** LD_PRELOAD at all (timeout/sleep/tail
+  must not be preloaded — they'd report LSan leaks and fail).
+
+**RESULT:** ASAN battery 23/23 PASS, zero sanitizer lines in server logs.
+
+---
+
+## CHALLENGE 18: Test Harness CRLF/BOM Corruption
+
+### PROBLEM:
+Editing `verify_v2.sh` on Windows introduced CRLF and a UTF-8 BOM;
+WSL bash died with `syntax error near unexpected token $'do\r'` or
+`line 1: ﻿#!/bin/bash\r: No such file`.
+
+### SOLUTION:
+- Write scripts via `[System.IO.File]::WriteAllText` with 
+  `UTF8Encoding($false)` and `\n` joins (no BOM, no CRLF).
+- Defense-in-depth: `sed -i 's/\r$//'` on every copy into WSL.
+
+**RESULT:** Suite runs cleanly from a Windows workspace.
+
+---
+
+## CHALLENGE 19: Heredoc env leakage in test harness
+
+### PROBLEM:
+Python heredocs used `os.environ["LOGDIR"]` without `import os` —
+intermittent `NameError: name 'os' is not defined` in suite context
+(one test passed because it happened to import os).
+
+### SOLUTION:
+Every Python heredoc now starts with `import os`; env vars passed
+explicitly (`LOGDIR="$LOGDIR" python3 - <<'PY'`).
+
+**RESULT:** All 23 battery assertions + 4 SSL + 23 ASAN checks pass
+deterministically.
+
+---
+
+## 🎉 V2.0.0 STATUS: ALL 23 + 4 + 23 GREEN
+
+Release battery 23/23 · SSL E2E 4/4 · ASAN+UBSAN 23/23 (zero errors)
+· warning-free build (`-Wall -Wextra -Wpedantic`) · CI green on
+ubuntu-latest + macos-latest.
+
+---
+
 *Built by Ali Zafar v1.0* 🎯
+*Hardened to v2.0.0 by GOD SYNDICATE OMNI — 2026-08-01*
